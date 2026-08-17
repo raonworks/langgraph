@@ -1,6 +1,15 @@
 from asyncio import graph
 from typing import TypedDict
+from langchain_core.prompts import PromptTemplate
+from langchain_ollama import ChatOllama
 from langgraph.graph import END, START, StateGraph
+
+llm = ChatOllama(model="qwen3-coder:30b", base_url="http://localhost:11434", temperature=1)
+
+prompt = PromptTemplate(
+    template="너는 한국사람이고 모든 대답은 한국어로만 할 수 있어.\n, Question: {query}",
+    input_variables=["query"],
+)
 
 class InputState(TypedDict):
     input: str
@@ -17,8 +26,11 @@ class PrivateState(OverallState):
 
 # node 정의
 def search_node(state: InputState) -> PrivateState:
+    chain = prompt | llm
+    result = chain.invoke({"query": state["input"]})
+
     return {
-        "search_result": ["결과1", "결과2", "결과3"],
+        "search_result": [result.content],
         "intermediate_data": f"{state['input']}에 대한 검색",
         "API_KEY": "sk-22112233445566"
     }
