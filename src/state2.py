@@ -3,8 +3,12 @@ from typing import TypedDict
 from langchain_core.prompts import PromptTemplate
 from langchain_ollama import ChatOllama
 from langgraph.graph import END, START, StateGraph
+from dotenv import load_dotenv
+import os
 
-llm = ChatOllama(model="qwen3-coder:30b", base_url="http://localhost:11434", temperature=1)
+# Load environment variables
+load_dotenv()
+llm = ChatOllama(model=os.getenv("MODEL", "gemma4:12b"), base_url=os.getenv("PRIVODER_HOST", "http://localhost:11434"), temperature=1)
 
 prompt = PromptTemplate(
     template="너는 한국사람이고 모든 대답은 한국어로만 할 수 있어.\n, Question: {query}",
@@ -32,7 +36,7 @@ def search_node(state: InputState) -> PrivateState:
     return {
         "search_result": [result.content],
         "intermediate_data": f"{state['input']}에 대한 검색",
-        "API_KEY": "sk-22112233445566"
+        "API_KEY": os.getenv("API_KEY", "sk-22112233445566")
     }
 
 def answer_node(state: PrivateState) -> OutputState:
@@ -51,6 +55,7 @@ graph.add_edge("search", "answer")
 graph.add_edge("answer", END)
 app = graph.compile()
 
-result = app.invoke({"input": "이별"})
+result = app.invoke({"input": "인프라 아키텍트란 무엇인지 설명해줘"})
 
 print(result)
+
